@@ -1,1 +1,6 @@
 .venev/
+plots/
+samples/
+analyse/__pycache__/
+gen/__pycache__/
+test_tones/

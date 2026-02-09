@@ -47,7 +47,7 @@ bash setup.sh
 ```
 ### Activate
 ```bash
-source .venv/bin/activate"
+source .venv/bin/activate
 ```
 
 ### Generate Test Signals
@@ -65,10 +65,16 @@ python -m analyse.cli rt60bands --input my_ir.wav --output plots/bands --mono
 python -m analyse.cli filter --input my_ir.wav --output plots/filter --mono
 python -m analyse.cli groupdelay --input my_ir.wav --output plots/groupdelay --mono
 python -m analyse.cli zplane --input my_ir.wav --output plots/zplane --mono
-python -m analyse.cli report --input my_ir.wav --output plots/my_ir_report --mono
+
 ```
 
 ---
+
+## Report
+```bash
+python -m analyse.cli report --input my_ir.wav --output plots/my_ir_report 
+```
+
 
 ## Z-Plane Pole Cloud Analysis
 

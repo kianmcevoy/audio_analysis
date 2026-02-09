@@ -432,6 +432,20 @@ def parse_arguments() -> argparse.Namespace:
         help="Length of output IR. Default: recorded.",
     )
 
+    deconvolve_parser.add_argument(
+        "--trim_trailing_noise",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="If true, trim trailing noise below -80 dB. Use --notrim to disable. Default: true.",
+    )
+
+    deconvolve_parser.add_argument(
+        "--trailing_noise_threshold_db",
+        type=float,
+        default=-80.0,
+        help="dB threshold relative to peak for trailing noise detection. Default: -80.0.",
+    )
+
 
     # ------------------------------------------------------------------
     # RT60 Decay (T20/T30/EDT) 
@@ -1206,6 +1220,8 @@ def main() -> None:
             target_peak=float(parsed_arguments.target_peak),
             remove_dc=bool(parsed_arguments.remove_dc),
             output_length_mode=str(parsed_arguments.output_length_mode),
+            trim_trailing_noise=bool(parsed_arguments.trim_trailing_noise),
+            trailing_noise_threshold_db=float(parsed_arguments.trailing_noise_threshold_db),
         )
 
         result = deconvolve_from_wav_files(

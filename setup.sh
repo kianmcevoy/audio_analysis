@@ -48,3 +48,5 @@ echo
 echo "To run analysis:"
 echo "  python -m analyse.cli --help"
 echo "----------------------------------------"
+
+source .venv/bin/activate

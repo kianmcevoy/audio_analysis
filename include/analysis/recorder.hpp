@@ -129,7 +129,7 @@ struct AnalysisRecorder
     int remaining = 0;
     int total = 0;
     int sample_rate = 48000;
-    std::filesystem::path output_dir;
+    std::filesystem::path output_dir{"analysis_runs"};
     
     bool finished = false;
 

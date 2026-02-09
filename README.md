@@ -65,16 +65,10 @@ python -m analyse.cli rt60bands --input my_ir.wav --output plots/bands --mono
 python -m analyse.cli filter --input my_ir.wav --output plots/filter --mono
 python -m analyse.cli groupdelay --input my_ir.wav --output plots/groupdelay --mono
 python -m analyse.cli zplane --input my_ir.wav --output plots/zplane --mono
-
+python -m analyse.cli report --input my_ir.wav --output plots/my_ir_report --mono
 ```
 
 ---
-
-## Report
-```bash
-python -m analyse.cli report --input my_ir.wav --output plots/my_ir_report 
-```
-
 
 ## Z-Plane Pole Cloud Analysis
 
@@ -160,3 +154,20 @@ gen/
 - Designed for offline inspection, not real-time use
 - Pole/zero estimation is diagnostic, not symbolic
 - Emphasis is on **understanding DSP behaviour**, not black-box metrics
+
+
+## Bundle analysis (meta.json + taps/*.wav)
+
+If you have a captured IR bundle folder (e.g. from a C++ probe harness):
+
+```bash
+python -m analyse.cli bundle --input analysis_runs/20260205_123456
+```
+
+Or use the helper script:
+
+```bash
+./scripts/analyse_bundle.sh analysis_runs/20260205_123456
+```
+
+This runs `report` on each tap WAV and writes an index Markdown at `reports/bundle_report.md`.

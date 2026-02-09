@@ -4,3 +4,4 @@ samples/
 analyse/__pycache__/
 gen/__pycache__/
 test_tones/
+analysis_runs/

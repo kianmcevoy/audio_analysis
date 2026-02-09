@@ -69,11 +69,6 @@ class DeconvolveSettings:
     # - "full_fft": return the full FFT length N (rarely needed)
     output_length_mode: str = "recorded"  # "recorded" | "full_fft"
 
-    # If True, trim trailing silence/noise (below -80 dB of peak).
-    # Keeps analysis focused on the meaningful decay region.
-    trim_trailing_noise: bool = True
-    trailing_noise_threshold_db: float = -80.0
-
 
 @dataclass(frozen=True)
 class DeconvolvedImpulseResponse:
@@ -119,48 +114,6 @@ def _write_wav_float32(path: Path, sample_rate_hz: int, samples_2d: np.ndarray) 
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     wavfile.write(str(path), int(sample_rate_hz), samples_2d.astype(np.float32, copy=False))
-
-
-def _trim_trailing_noise(
-    samples_2d: np.ndarray,
-    threshold_db: float = -80.0,
-) -> np.ndarray:
-    """
-    Trim trailing noise from IR samples.
-
-    Args:
-        samples_2d: IR samples, shape (N, C)
-        threshold_db: dB threshold relative to peak magnitude
-
-    Returns:
-        Trimmed samples where trailing samples below threshold are removed.
-        Finds the last sample above threshold across all channels.
-    """
-    if samples_2d.size == 0:
-        return samples_2d
-
-    # Find peak magnitude across all samples and channels
-    peak_magnitude = float(np.max(np.abs(samples_2d)))
-    if peak_magnitude <= 0:
-        return samples_2d
-
-    # Convert threshold from dB to linear
-    peak_db = 20 * np.log10(peak_magnitude + 1e-12)
-    threshold_linear = 10 ** ((peak_db + threshold_db) / 20)
-
-    # Find magnitude envelope (max across channels for each sample)
-    magnitude = np.max(np.abs(samples_2d), axis=1)
-
-    # Find last sample above threshold
-    above_threshold = np.where(magnitude > threshold_linear)[0]
-    if len(above_threshold) > 0:
-        last_index = above_threshold[-1]
-        # Keep a small margin (e.g., 1000 samples at 48kHz ≈ 20ms) to preserve natural tail
-        margin_samples = max(0, int(0.02 * 48000))  # 20ms margin
-        end_index = min(last_index + margin_samples, samples_2d.shape[0])
-        return samples_2d[:end_index]
-
-    return samples_2d  # All silence, return as-is
 
 
 # --------------------------------------------------------------------------------------
@@ -236,12 +189,6 @@ def deconvolve_impulse_response(
 
     if settings.normalise_peak:
         ir_2d = _peak_normalise(ir_2d, target_peak=float(settings.target_peak))
-
-    if settings.trim_trailing_noise:
-        ir_2d = _trim_trailing_noise(
-            ir_2d,
-            threshold_db=settings.trailing_noise_threshold_db,
-        )
 
     return ir_2d
 

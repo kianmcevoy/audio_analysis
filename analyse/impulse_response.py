@@ -48,7 +48,6 @@ class ImpulseResponseViewSettings:
     early_window_seconds: float = 0.08
     log_magnitude_floor_db: float = -120.0
     use_mono_downmix: bool = False
-    trim_leading_silence_db: float = -60.0  # Trim silence below this level (dB below peak)
 
 
 def compute_log_magnitude(samples: np.ndarray) -> np.ndarray:
@@ -61,48 +60,6 @@ def compute_log_magnitude(samples: np.ndarray) -> np.ndarray:
     return np.abs(samples).astype(np.float32)
 
 
-def trim_leading_silence(
-    samples: np.ndarray,
-    threshold_db: float = -60.0,
-) -> np.ndarray:
-    """
-    Remove leading silence from audio samples.
-
-    Args:
-        samples: Audio samples (1D or 2D). If 2D (N, C), uses max magnitude across channels.
-        threshold_db: Silence threshold relative to peak magnitude in dB.
-                      Samples above this level are kept.
-
-    Returns:
-        Trimmed samples with leading silence removed.
-    """
-    if samples.size == 0:
-        return samples
-
-    # Compute magnitude for detection
-    if samples.ndim == 1:
-        magnitude = compute_log_magnitude(samples)
-    else:
-        # For 2D array (N, C), find peak across all channels
-        magnitude = np.max(compute_log_magnitude(samples), axis=1)
-
-    peak_magnitude = np.max(magnitude)
-    if peak_magnitude <= 0:
-        return samples  # All silence, return as-is
-
-    # Convert to dB and find threshold
-    magnitude_db = 20 * np.log10(peak_magnitude + 1e-12)
-    threshold_absolute = 10 ** ((magnitude_db + threshold_db) / 20)
-
-    # Find first sample above threshold
-    above_threshold = np.where(magnitude > threshold_absolute)[0]
-    if len(above_threshold) > 0:
-        trim_index = above_threshold[0]
-        return samples[trim_index:]
-
-    return samples  # All silence, return as-is
-
-
 def plot_impulse_response_waveform(
     loaded_audio: LoadedAudio,
     settings: ImpulseResponseViewSettings,
@@ -113,13 +70,7 @@ def plot_impulse_response_waveform(
     Plot waveform and early waveform zoom for the input audio.
     """
 
-    # Trim leading silence
-    trimmed_samples = trim_leading_silence(
-        loaded_audio.samples,
-        threshold_db=settings.trim_leading_silence_db,
-    )
-
-    total_samples = trimmed_samples.shape[0]
+    total_samples = loaded_audio.samples.shape[0]
     sample_rate_hz = loaded_audio.sample_rate_hz
     full_time_axis_seconds = time_axis_from_sample_count(total_samples, sample_rate_hz)
 
@@ -128,17 +79,16 @@ def plot_impulse_response_waveform(
         title=f"Waveform (full) - {loaded_audio.file_path.name}"
     )
 
-    # Extract channels from trimmed audio
-    if trimmed_samples.ndim == 1:
-        # Mono
-        plot_channels = [("Mono", trimmed_samples, 1.0)]
-    else:
-        # Stereo or multichannel
-        channel_names = ["Left", "Right"] if trimmed_samples.shape[1] >= 2 else [f"Channel {i}" for i in range(trimmed_samples.shape[1])]
-        plot_channels = []
-        for idx in range(trimmed_samples.shape[1]):
-            alpha = 1.0 if idx == 0 else 0.5
-            plot_channels.append((channel_names[idx], trimmed_samples[:, idx], alpha))
+    analysis_channels = get_analysis_channels(
+        loaded_audio,
+        use_mono_downmix_for_stereo=settings.use_mono_downmix,
+    )
+
+    # Add alpha values: mono or first channel gets 1.0, right channel gets 0.5
+    plot_channels = []
+    for idx, (channel_name, channel_samples) in enumerate(analysis_channels):
+        alpha = 1.0 if idx == 0 else 0.5
+        plot_channels.append((channel_name, channel_samples, alpha))
 
     for channel_name, channel_samples, channel_alpha in plot_channels:
         plot_time_series(
@@ -192,25 +142,18 @@ def plot_impulse_response_log_magnitude(
     Plot log-magnitude (dB) over time for tail inspection.
     """
 
-    # Trim leading silence
-    trimmed_samples = trim_leading_silence(
-        loaded_audio.samples,
-        threshold_db=settings.trim_leading_silence_db,
+    analysis_channels = get_analysis_channels(
+        loaded_audio,
+        use_mono_downmix_for_stereo=settings.use_mono_downmix,
     )
 
-    # Extract channels from trimmed audio
-    if trimmed_samples.ndim == 1:
-        # Mono
-        plot_channels = [("Mono", trimmed_samples, 1.0)]
-    else:
-        # Stereo or multichannel
-        channel_names = ["Left", "Right"] if trimmed_samples.shape[1] >= 2 else [f"Channel {i}" for i in range(trimmed_samples.shape[1])]
-        plot_channels = []
-        for idx in range(trimmed_samples.shape[1]):
-            alpha = 1.0 if idx == 0 else 0.5
-            plot_channels.append((channel_names[idx], trimmed_samples[:, idx], alpha))
+    # Add alpha values: mono or first channel gets 1.0, right channel gets 0.5
+    plot_channels = []
+    for idx, (channel_name, channel_samples) in enumerate(analysis_channels):
+        alpha = 1.0 if idx == 0 else 0.5
+        plot_channels.append((channel_name, channel_samples, alpha))
 
-    total_samples = trimmed_samples.shape[0]
+    total_samples = loaded_audio.samples.shape[0]
     sample_rate_hz = loaded_audio.sample_rate_hz
     time_axis_seconds = time_axis_from_sample_count(total_samples, sample_rate_hz)
 

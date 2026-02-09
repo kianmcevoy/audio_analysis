@@ -101,6 +101,11 @@ from analyse.report import (
     run_report_from_wav_file,
 )
 
+from analyse.bundle import (
+    BundleRunSettings,
+    run_bundle_report,
+)
+
 
 def parse_arguments() -> argparse.Namespace:
     top_level_parser = argparse.ArgumentParser(
@@ -365,7 +370,24 @@ def parse_arguments() -> argparse.Namespace:
         help="Max frequency for plot (Hz). Default: 20000.",
     )
     # ------------------------------------------------------------------
-    # Deconvolve (sweep -> impulse response)
+    
+    # ------------------------------------------------------------------
+    # Bundle (analyse a folder of taps + meta.json)
+    # ------------------------------------------------------------------
+    bundle_parser = subparsers.add_parser(
+        "bundle",
+        help="Analyse an IR bundle folder (meta.json + taps/*.wav) and write per-tap reports.",
+    )
+    bundle_parser.add_argument("--input", dest="bundle_root", type=str, required=True, help="Bundle root folder")
+    bundle_parser.add_argument(
+        "--reports-subdir",
+        dest="reports_subdir",
+        type=str,
+        default="reports",
+        help="Subfolder under bundle root to write outputs (default: reports)",
+    )
+
+# Deconvolve (sweep -> impulse response)
     # ------------------------------------------------------------------
     deconvolve_parser = subparsers.add_parser(
         "deconvolve",
@@ -430,20 +452,6 @@ def parse_arguments() -> argparse.Namespace:
         choices=["recorded", "full_fft"],
         default="recorded",
         help="Length of output IR. Default: recorded.",
-    )
-
-    deconvolve_parser.add_argument(
-        "--trim_trailing_noise",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="If true, trim trailing noise below -80 dB. Use --notrim to disable. Default: true.",
-    )
-
-    deconvolve_parser.add_argument(
-        "--trailing_noise_threshold_db",
-        type=float,
-        default=-80.0,
-        help="dB threshold relative to peak for trailing noise detection. Default: -80.0.",
     )
 
 
@@ -1167,6 +1175,7 @@ def parse_arguments() -> argparse.Namespace:
     report_parser.add_argument("--decay", dest="run_decay", action=argparse.BooleanOptionalAction, default=True)
     report_parser.add_argument("--rt60bands", dest="run_rt60bands", action=argparse.BooleanOptionalAction, default=True)
     report_parser.add_argument("--fr", dest="run_fr", action=argparse.BooleanOptionalAction, default=True)
+    report_parser.add_argument("--gd", dest="run_gd", action=argparse.BooleanOptionalAction, default=True, help="Group delay vs frequency")
     report_parser.add_argument("--spectrogram", dest="run_spectrogram", action=argparse.BooleanOptionalAction, default=True)
     report_parser.add_argument("--waterfall", dest="run_waterfall", action=argparse.BooleanOptionalAction, default=True)
     report_parser.add_argument("--diffusion", dest="run_diffusion", action=argparse.BooleanOptionalAction, default=True)
@@ -1220,8 +1229,6 @@ def main() -> None:
             target_peak=float(parsed_arguments.target_peak),
             remove_dc=bool(parsed_arguments.remove_dc),
             output_length_mode=str(parsed_arguments.output_length_mode),
-            trim_trailing_noise=bool(parsed_arguments.trim_trailing_noise),
-            trailing_noise_threshold_db=float(parsed_arguments.trailing_noise_threshold_db),
         )
 
         result = deconvolve_from_wav_files(
@@ -1627,6 +1634,7 @@ def main() -> None:
             run_decay=bool(parsed_arguments.run_decay),
             run_rt60_bands=bool(parsed_arguments.run_rt60bands),
             run_frequency_response=bool(parsed_arguments.run_fr),
+            run_group_delay=bool(parsed_arguments.run_gd),
             run_spectrogram=bool(parsed_arguments.run_spectrogram),
             run_waterfall=bool(parsed_arguments.run_waterfall),
             run_diffusion=bool(parsed_arguments.run_diffusion),
@@ -1642,6 +1650,13 @@ def main() -> None:
 
         print(results.summary_markdown)
         print(f"Wrote: {results.summary_markdown_path}")
+        return
+
+    
+    if command_name == "bundle":
+        settings = BundleRunSettings(reports_subdir=str(parsed_arguments.reports_subdir))
+        index = run_bundle_report(str(parsed_arguments.bundle_root), settings=settings)
+        print(f"Wrote bundle report index: {index}")
         return
 
     raise ValueError(f"Unknown command: {command_name}")

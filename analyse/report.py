@@ -48,6 +48,14 @@ from analyse.frequency_response import (
     ChannelFrequencyResponse,
 )
 
+
+from analyse.group_delay import (
+    GroupDelayAnalysisSettings,
+    GroupDelayPlotSettings,
+    plot_group_delay_from_wav_file,
+    summarise_group_delay_results_text,
+)
+
 from analyse.spectrogram import (
     SpectrogramAnalysisSettings,
     SpectrogramPlotSettings,
@@ -97,6 +105,7 @@ class ReportSettings:
     run_decay: bool = True
     run_rt60_bands: bool = True
     run_frequency_response: bool = True
+    run_group_delay: bool = True
     run_spectrogram: bool = True
     run_waterfall: bool = True
     run_diffusion: bool = True
@@ -112,6 +121,8 @@ class ReportSettings:
     rt60_bands_plot_settings: Optional[Rt60BandsPlotSettings] = None
     frequency_response_analysis_settings: Optional[FrequencyResponseAnalysisSettings] = None
     frequency_response_plot_settings: Optional[FrequencyResponsePlotSettings] = None
+    group_delay_analysis_settings: Optional[GroupDelayAnalysisSettings] = None
+    group_delay_plot_settings: Optional[GroupDelayPlotSettings] = None
     spectrogram_analysis_settings: Optional[SpectrogramAnalysisSettings] = None
     spectrogram_plot_settings: Optional[SpectrogramPlotSettings] = None
     waterfall_analysis_settings: Optional[WaterfallAnalysisSettings] = None
@@ -291,6 +302,22 @@ def run_report_from_wav_file(
         md_parts.append(_md_section("Frequency response"))
         md_parts.append(_md_image(output_basename, "_fr", "Frequency response spectrum"))
         md_parts.append(_md_codeblock(summarise_frequency_response_results_text(fr_results)))
+
+    
+    if settings.run_group_delay:
+        gd_results = plot_group_delay_from_wav_file(
+            input_wav_file_path=input_wav_file_path,
+            settings=_apply_common_overrides(
+                settings.group_delay_analysis_settings or GroupDelayAnalysisSettings(),
+                settings,
+            ),
+            plot_settings=settings.group_delay_plot_settings or GroupDelayPlotSettings(),
+            output_basename=output_basename,
+            show_interactive=False,
+        )
+        md_parts.append(_md_section("Group delay"))
+        md_parts.append(_md_image(output_basename, "_groupdelay", "Group delay vs frequency"))
+        md_parts.append(_md_codeblock(summarise_group_delay_results_text(gd_results)))
 
     if settings.run_spectrogram:
         spec_results = plot_spectrogram_from_wav_file(

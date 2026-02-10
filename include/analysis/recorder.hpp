@@ -16,10 +16,10 @@ struct AnalysisRecorder
         output_dir = path;
     }
     
-    void begin(int length_blocks, int sr)
+    void begin(int length_blocks, int block_size, int sr)
     {
         remaining = length_blocks;
-        total = length_blocks;
+        total = length_blocks * block_size;
         sample_rate = sr;
         active = true;
         taps.clear();

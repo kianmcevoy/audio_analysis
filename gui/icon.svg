@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#26324a"/>
+      <stop offset="1" stop-color="#121826"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5ee0d0"/>
+      <stop offset="1" stop-color="#3a8fd9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- tile -->
+  <rect x="16" y="16" width="224" height="224" rx="48" fill="url(#bg)"/>
+
+  <!-- grid -->
+  <g stroke="#ffffff" stroke-opacity="0.08" stroke-width="2">
+    <line x1="40" y1="84" x2="216" y2="84"/>
+    <line x1="40" y1="128" x2="216" y2="128"/>
+    <line x1="40" y1="172" x2="216" y2="172"/>
+    <line x1="84" y1="40" x2="84" y2="216"/>
+    <line x1="128" y1="40" x2="128" y2="216"/>
+    <line x1="172" y1="40" x2="172" y2="216"/>
+  </g>
+
+  <!-- decaying impulse response -->
+  <path d="M40 128 L52 128 L58 52 L66 196 L74 74 L82 176 L90 92 L98 160 L106 104 L114 150
+           L122 112 L130 142 L138 118 L146 137 L154 122 L162 133 L170 125 L178 131 L186 127
+           L194 129 L216 128"
+        fill="none" stroke="url(#wave)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- decay envelope -->
+  <path d="M58 52 C 96 60, 140 112, 216 124"
+        fill="none" stroke="#ffb454" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="58" cy="52" r="9" fill="#ffb454"/>
+</svg>

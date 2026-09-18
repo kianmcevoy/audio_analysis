@@ -5,3 +5,4 @@ analyse/__pycache__/
 gen/__pycache__/
 test_tones/
 analysis_runs/
+gui/__pycache__/

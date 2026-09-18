@@ -39,6 +39,27 @@ The framework is intentionally **offline, deterministic, and IR-centric**, makin
 
 ---
 
+## GUI
+
+```bash
+./analyse_gui.sh                   # first run creates .venv automatically
+./analyse_gui.sh a.wav b.wav       # optionally pre-load files
+./analyse_gui.sh --install-desktop   # add "Audio Analysis" (with icon) to your app menu
+./analyse_gui.sh --uninstall-desktop # remove it again
+```
+
+Add one or more WAVs, then click an analysis. It runs once per file (using the
+CLI defaults) and shows the results side by side — one column per file, one row
+per output plot. The toolbar zooms/pans; **Export plot…** saves the comparison
+(PNG/PDF/SVG), **Save individual PNGs…** copies the raw per-file plots, and
+**Generate report…** runs the full `report` suite for each file into
+`<folder>/<name>_report/` (plots + `<name>_report.md`).
+The CLI's numeric summaries (RT60 etc.) appear under the plot.
+
+Requires tkinter (`sudo apt install python3-tk` if missing).
+
+---
+
 ## Quick Start
 
 ### Installation

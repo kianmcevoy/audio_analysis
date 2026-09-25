@@ -93,7 +93,11 @@ struct AnalysisRecorder
     {
         std::time_t t = std::time(nullptr);
         std::tm tm{};
+#ifdef _WIN32
+        localtime_s(&tm, &t);
+#else
         localtime_r(&t, &tm);
+#endif
         std::ostringstream ss;
         ss << std::put_time(&tm, "%Y%m%d_%H%M%S");
         return ss.str();
